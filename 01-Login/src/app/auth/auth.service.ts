@@ -5,16 +5,16 @@ import * as auth0 from 'auth0-js';
 
 @Injectable()
 export class AuthService {
-
   private _idToken: string;
   private _accessToken: string;
   private _expiresAt: number;
 
+  // this is the basic auth0 object.
   auth0 = new auth0.WebAuth({
     clientID: AUTH_CONFIG.clientID,
     domain: AUTH_CONFIG.domain,
     responseType: 'token id_token',
-    redirectUri: AUTH_CONFIG.callbackURL
+    redirectUri: AUTH_CONFIG.callbackURL,
   });
 
   constructor(public router: Router) {
@@ -35,6 +35,12 @@ export class AuthService {
     this.auth0.authorize();
   }
 
+  // after authenticating at the login page, users are redirected back to the app
+  // with the URL containing a hash fragment with the authentication info.
+  // this method processes the hash.
+  //
+  // we start the whole auth process by calling this method from the app's root
+  // component
   public handleAuthentication(): void {
     this.auth0.parseHash((err, authResult) => {
       if (authResult && authResult.accessToken && authResult.idToken) {
@@ -52,7 +58,7 @@ export class AuthService {
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
     // Set the time that the access token will expire at
-    const expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
+    const expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
     this._accessToken = authResult.accessToken;
     this._idToken = authResult.idToken;
     this._expiresAt = expiresAt;
@@ -60,12 +66,14 @@ export class AuthService {
 
   public renewTokens(): void {
     this.auth0.checkSession({}, (err, authResult) => {
-       if (authResult && authResult.accessToken && authResult.idToken) {
-         this.localLogin(authResult);
-       } else if (err) {
-         alert(`Could not get a new token (${err.error}: ${err.error_description}).`);
-         this.logout();
-       }
+      if (authResult && authResult.accessToken && authResult.idToken) {
+        this.localLogin(authResult);
+      } else if (err) {
+        alert(
+          `Could not get a new token (${err.error}: ${err.error_description}).`
+        );
+        this.logout();
+      }
     });
   }
 
@@ -85,5 +93,4 @@ export class AuthService {
     // access token's expiry time
     return new Date().getTime() < this._expiresAt;
   }
-
 }
