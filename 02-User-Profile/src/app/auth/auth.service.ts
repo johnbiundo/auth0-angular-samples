@@ -6,7 +6,6 @@ import * as auth0 from 'auth0-js';
 
 @Injectable()
 export class AuthService {
-
   private _idToken: string;
   private _accessToken: string;
   private _expiresAt: number;
@@ -16,7 +15,7 @@ export class AuthService {
     domain: AUTH_CONFIG.domain,
     responseType: 'token id_token',
     redirectUri: AUTH_CONFIG.callbackURL,
-    scope: 'openid profile'
+    scope: 'openid profile',
   });
 
   userProfile: any;
@@ -70,7 +69,7 @@ export class AuthService {
     // Set isLoggedIn flag in localStorage
     localStorage.setItem('isLoggedIn', 'true');
     // Set the time that the access token will expire at
-    const expiresAt = (authResult.expiresIn * 1000) + new Date().getTime();
+    const expiresAt = authResult.expiresIn * 1000 + new Date().getTime();
     this._accessToken = authResult.accessToken;
     this._idToken = authResult.idToken;
     this._expiresAt = expiresAt;
@@ -81,13 +80,20 @@ export class AuthService {
       if (authResult && authResult.accessToken && authResult.idToken) {
         this.localLogin(authResult);
       } else if (err) {
-        alert(`Could not get a new token (${err.error}: ${err.error_description}).`);
+        alert(
+          `Could not get a new token (${err.error}: ${err.error_description}).`
+        );
         this.logout();
       }
     });
   }
 
   public logout(): void {
+    // JB added so that lock page is popped up on each login attempt
+    this.auth0.logout({
+      returnTo: 'http://newb:3000',
+      clientID: AUTH_CONFIG.clientID,
+    });
     // Remove tokens and expiry time
     this._idToken = '';
     this._accessToken = '';
@@ -103,6 +109,4 @@ export class AuthService {
     // access token's expiry time
     return new Date().getTime() < this._expiresAt;
   }
-
 }
-
