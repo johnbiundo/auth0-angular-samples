@@ -10,36 +10,38 @@ interface IApiResponse {
 @Component({
   selector: 'app-ping',
   templateUrl: './ping.component.html',
-  styleUrls: ['./ping.component.css']
+  styleUrls: ['./ping.component.css'],
 })
 export class PingComponent implements OnInit {
-
-  API_URL = 'http://localhost:3001/api';
+  API_URL = 'http://newb:3001/api';
   message: string;
 
   constructor(public auth: AuthService, private http: HttpClient) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   public ping(): void {
     this.message = '';
-    this.http.get(`${this.API_URL}/public`)
+    this.http
+      .get(`${this.API_URL}/public`)
       .subscribe(
-        data => this.message = (data as IApiResponse).message,
-        error => this.message = error
+        data => (this.message = (data as IApiResponse).message),
+        error => (this.message = error)
       );
   }
 
   public securedPing(): void {
     this.message = '';
-    this.http.get(`${this.API_URL}/private`, {
-      headers: new HttpHeaders()
-        .set('Authorization', `Bearer ${this.auth.accessToken}`)
-    })
+    this.http
+      .get(`${this.API_URL}/private`, {
+        headers: new HttpHeaders().set(
+          'Authorization',
+          `Bearer ${this.auth.accessToken}`
+        ),
+      })
       .subscribe(
-        data => this.message = (data as IApiResponse).message,
-        error => this.message = error
+        data => (this.message = (data as IApiResponse).message),
+        error => (this.message = error)
       );
   }
 }
